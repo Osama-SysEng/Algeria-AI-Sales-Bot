@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class LeadStage(str, Enum):
     NEW = "new"
@@ -20,6 +20,18 @@ class LeadCreate(BaseModel):
     source: str = Field(default="manual", max_length=64)
     consent_to_contact: bool = False
 
+    @field_validator("display_name", "contact_reference", "source", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("display_name", "contact_reference")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
 class LeadView(LeadCreate):
     id: str
     stage: LeadStage = LeadStage.NEW
@@ -29,6 +41,11 @@ class DraftRequest(BaseModel):
     lead_id: str
     customer_message: str = Field(min_length=1, max_length=8000)
     catalog_context: str = Field(default="", max_length=8000)
+
+    @field_validator("customer_message", "catalog_context", mode="before")
+    @classmethod
+    def _strip_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 class ReplyDraft(BaseModel):
     lead_id: str
@@ -42,3 +59,11 @@ class ActionApproval(BaseModel):
     action_type: str = Field(pattern="^(send_message|create_quote|mark_won)$")
     approved_by: str = Field(min_length=2, max_length=120)
     note: str = Field(default="", max_length=1000)
+
+    @field_validator("approved_by", "note", mode="before")
+    @classmethod
+    def _strip_approval(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+class StageTransition(BaseModel):
+    target_stage: LeadStage
