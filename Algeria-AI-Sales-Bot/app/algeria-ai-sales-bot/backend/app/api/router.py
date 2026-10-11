@@ -1,7 +1,7 @@
 from collections import Counter
 from time import monotonic
 from uuid import uuid4
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from backend.app.core.config import settings
 from backend.app.core.policies import can_contact_lead, can_transition
 from backend.app.models.domain import ActionApproval, ApprovalState, DraftRequest, LeadCreate, LeadView, StageTransition
@@ -51,9 +51,9 @@ def create_lead(payload: LeadCreate, request: Request, _: str = Depends(require_
     return lead
 
 @router.get("/leads", response_model=list[LeadView])
-def list_leads(request: Request, _: str = Depends(require_operator)):
+def list_leads(request: Request, _: str = Depends(require_operator), limit: int = Query(default=50, ge=1, le=500), offset: int = Query(default=0, ge=0)):
     _check_rate_limit(request)
-    return list(LEADS.values())
+    return list(LEADS.values())[offset:offset + limit]
 
 @router.post("/leads/{lead_id}/stage", response_model=LeadView)
 def transition_stage(lead_id: str, payload: StageTransition, request: Request, _: str = Depends(require_operator)):
