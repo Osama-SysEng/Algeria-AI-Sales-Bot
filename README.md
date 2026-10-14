@@ -46,3 +46,5 @@ python -m pytest backend/tests -q   # 3 passed
 - لا إرسال خارجي فعلي (Telegram/CRM): موصلاتها قرار تشغيلي مستقبلي (webhook موقّع + outbox).
 - لا استمرارية بيانات: للانتقال للإنتاج يلزم PostgreSQL.
 - الدارجة: قواعد نوايا خفيفة، ليست نموذج لغه مدربا.
+
+- تسجيل منظم JSON مع request_id وحجب الأسرار (راجع docs/LOGGING.md).
